@@ -271,9 +271,6 @@ export function initializeMcpApiHandler(
   let servers: McpServer[] = [];
 
   let statelessServer: McpServer;
-  const statelessTransport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-  });
   
   // Start periodic cleanup if not already running
   if (!cleanupInterval) {
@@ -356,11 +353,15 @@ export function initializeMcpApiHandler(
           config.onEvent
         );
 
+        const statelessTransport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: undefined,
+        });
+
         if (!statelessServer) {
           statelessServer = new McpServer(serverInfo, mcpServerOptions);
           await initializeServer(statelessServer);
-          await statelessServer.connect(statelessTransport);
         }
+        await statelessServer.connect(statelessTransport);
 
         // Parse the request body
         let bodyContent: BodyType;

@@ -1,5 +1,11 @@
 # mcp-handler
 
+## 1.0.6
+
+### Patch Changes
+
+- Wait for stateless server initialization to finish before connecting transports from concurrent requests.
+
 ## 1.0.4
 
 ### Patch Changes

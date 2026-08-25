@@ -22,6 +22,7 @@ import { EventEmittingResponse } from "../lib/event-emitter.js";
 import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types";
 import { getAuthContext } from "../auth/auth-context";
 import { ServerOptions } from ".";
+import { createRetryableInitializer } from "./initialize-once";
 
 interface SerializedRequest {
   requestId: string;
@@ -270,8 +271,12 @@ export function initializeMcpApiHandler(
 
   let servers: McpServer[] = [];
 
-  let statelessServer: McpServer;
-  
+  const getStatelessServer = createRetryableInitializer(async () => {
+    const server = new McpServer(serverInfo, mcpServerOptions);
+    await initializeServer(server);
+    return server;
+  });
+
   // Start periodic cleanup if not already running
   if (!cleanupInterval) {
     cleanupInterval = setInterval(() => {
@@ -357,10 +362,7 @@ export function initializeMcpApiHandler(
           sessionIdGenerator: undefined,
         });
 
-        if (!statelessServer) {
-          statelessServer = new McpServer(serverInfo, mcpServerOptions);
-          await initializeServer(statelessServer);
-        }
+        const statelessServer = await getStatelessServer();
         await statelessServer.connect(statelessTransport);
 
         // Parse the request body
